@@ -5,15 +5,46 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class DataService {
-
+currentUser:any
+currentAcno:any
    //DATABASE
    db :any = {
-    1000:{"acno":1000,"username":"aby","password":1000,"balance":5000},
-    1001:{"acno":1001,"username":"bae","password":1001,"balance":50000},
-    1002:{"acno":1002,"username":"saly","password":1002,"balance":3000}
+    1000:{"acno":1000,"username":"aby","password":1000,"balance":5000,transaction:[]},
+    1001:{"acno":1001,"username":"bae","password":1001,"balance":50000,transaction:[]},
+    1002:{"acno":1002,"username":"saly","password":1002,"balance":3000,transaction:[]}
   }
 
-  constructor() { }
+  constructor() {
+   this.getDetails()
+   }
+
+  //get details from local storage
+  getDetails(){
+   if(localStorage.getItem("database")){
+     this.db=JSON.parse(localStorage.getItem("database")|| '')
+   } 
+   if(localStorage.getItem("currentUser")){
+    this.currentUser=JSON.parse(localStorage.getItem("currentUser")|| '')
+  } 
+  if(localStorage.getItem("currentAcno")){
+    this.currentAcno=JSON.parse(localStorage.getItem("currentAcno")|| '')
+  } 
+  }
+
+//saveDetails()
+saveDetails(){
+  if(this.db){
+    localStorage.setItem("database",JSON.stringify(this.db))
+  }
+  if(this.currentUser){
+    localStorage.setItem("currentUser",JSON.stringify(this.currentUser))
+  }
+  if(this.currentAcno){
+    localStorage.setItem("currentAcno",JSON.stringify(this.currentAcno))
+  }
+}
+
+
 //login
   login(acno:any,pswd:any){
    
@@ -21,6 +52,10 @@ export class DataService {
 
    if(acno in db ){
      if(pswd ==db[acno]["password"]){
+
+this.currentUser=db[acno]["username"]
+this.currentAcno=acno
+this.saveDetails()
        return true
        
   
@@ -46,11 +81,13 @@ db[acno]=
 {acno,
   username,
   password,
-  "balance":0
+  "balance":0,
+  transaction:[]
  
   
 }
 console.log(db)
+this.saveDetails()
 return true 
 }
 
@@ -65,6 +102,15 @@ deposit(acno:any,password:any,amt:any){
     if(password==db[acno]["password"]){
 
       db[acno]["balance"]+=amount
+      db[acno].transaction.push(
+        {
+          type:"CREDIT",
+          amount:amount
+        }
+      )
+      console.log(db);
+      
+      this.saveDetails()
       return db[acno]["balance"]
 
     }
@@ -91,6 +137,12 @@ withdraw(acno:any,password:any,amt:any){
 
 
         db[acno]["balance"]-=amount
+        db[acno].transaction.push(
+          {
+            type:"DEBIT",
+            amount:amount
+          })
+        this.saveDetails()
       return db[acno]["balance"]
 
       }
@@ -112,6 +164,12 @@ withdraw(acno:any,password:any,amt:any){
     alert("user does not exist")
     return false
   }
+
+}
+
+getTransaction(acno:any){
+  return this.db[acno].transaction
+  
 
 }
 
